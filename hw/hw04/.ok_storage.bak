@@ -1,6 +1,0 @@
-'VendingMachine-correct', (0, 66)
-'Account-correct', (512, 66)
-'FreeChecking-correct', (1024, 66)
-'add_d_leaves-correct', (1536, 66)
-'prune_min-correct', (2048, 66)
-'delete-correct', (2560, 66)
