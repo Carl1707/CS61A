@@ -21,3 +21,8 @@ build/
 
 # Other
 .DS_Store
+
+# Okpy autograder files
+.ok_*
+ok
+*.ok
