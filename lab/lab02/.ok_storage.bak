@@ -1,0 +1,7 @@
+'lambda_curry2-correct', (0, 66)
+'count_cond-correct', (512, 66)
+'cycle-correct', (1024, 66)
+'composite_identity-correct', (1536, 66)
+'Lambda the Free-correct', (2048, 66)
+'The Truth Will Prevail-correct', (2560, 66)
+'Higher Order Functions-correct', (3072, 66)

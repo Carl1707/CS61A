@@ -1,0 +1,30 @@
+{
+    "name": "Lab 4",
+    "endpoint": "cal/cs61a/su25/lab04",
+    "src": [
+        "lab04.py"
+    ],
+    "tests": {
+        "lab*.py": "doctest",
+        "tests/*.py": "ok_test"
+    },
+    "default_tests": [
+        "lists-sequences-mutation",
+        "dicts",
+        "group_by",
+        "insert_items",
+        "wwpd",
+        "prune_leaves",
+        "distance",
+        "closer_city",
+        "check_city_abstraction"
+    ],
+    "protocols": [
+        "restore",
+        "file_contents",
+        "unlock",
+        "grading",
+        "analytics",
+        "backup"
+    ]
+}
