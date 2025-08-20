@@ -1,6 +1,9 @@
 """Ants Vs. SomeBees."""
 
 import random
+
+from sqlalchemy.sql.operators import truediv
+
 from ucb import main, interact, trace
 from collections import OrderedDict
 
@@ -107,6 +110,7 @@ class Ant(Insect):
     food_cost = 0
     is_container = False
     is_doubled = False
+    blocks_path = True
     # ADD CLASS ATTRIBUTES HERE
 
     def __init__(self, health=1):
@@ -470,20 +474,117 @@ class QueenAnt(ThrowerAnt):
 # Extra Challenge #
 ################
 
+# class SlowThrower(ThrowerAnt):
+#     """ThrowerAnt that causes Slow on Bees."""
+#
+#     name = 'Slow'
+#     food_cost = 6
+#     # BEGIN Problem EC 1
+#     implemented = True   # Change to True to view in the GUI
+#     slowing_times = 5
+#     # END Problem EC 1
+#     #
+#     def throw_at(self, target):
+#         # BEGIN Problem EC 1
+#         # 只有当有目标时才执行
+#         if target:
+#             # 检查蜜蜂是否是第一次被减速
+#             # 如果它没有 .original_action 属性，说明是第一次
+#             # 否则后面的original_action就是new_slow_action了
+#             if not hasattr(target, 'original_action'):
+#                 # 1. 保存蜜蜂最原始的 action 方法
+#                 target.original_action = target.action
+#
+#             # 2. 定义一个新的 action 方法来替换它
+#             # 这个新方法将作为 target 的方法被调用，所以它的第一个参数
+#             # 实际上是 target 自身 (通常我们叫它 self，但这里为了清晰可以换个名字)
+#             def new_slow_action(gamestate):
+#                 # 检查减速效果是否还在
+#                 if target.slow_turns > 0:
+#                     # a. 只有在偶数回合才允许行动
+#                     if gamestate.time % 2 == 0:
+#                         target.is_frozen = False
+#                         target.original_action(gamestate)  # 调用保存好的原始 action
+#                     # b. (在奇数回合，什么也不做，即被减速了)
+#                     else:
+#                         target.is_frozen = True
+#                     # c. 无论是否行动，回合数都减 1
+#                     target.slow_turns -= 1
+#
+#                 else:
+#                     # 效果结束后，直接调用原始action
+#                     target.original_action(gamestate)
+#                     target.is_frozen = False
+#
+#             # 3. 在目标蜜蜂上设置初始减速回合数
+#
+#             target.slow_turns = self.slowing_times
+#
+#             # 4. 用我们新定义的函数替换掉蜜蜂的 action 方法
+#             target.action = new_slow_action
+#         # END Problem EC 1
+
+# In ants.py
+
 class SlowThrower(ThrowerAnt):
     """ThrowerAnt that causes Slow on Bees."""
 
     name = 'Slow'
     food_cost = 6
     # BEGIN Problem EC 1
-    implemented = False   # Change to True to view in the GUI
+    implemented = True
+    slowing_times = 5
     # END Problem EC 1
 
     def throw_at(self, target):
+        """Slow the TARGET Bee by calling its slow method."""
         # BEGIN Problem EC 1
-        "*** YOUR CODE HERE ***"
+        if target:
+            target.slow(self.slowing_times)
         # END Problem EC 1
 
+# class ScaryThrower(ThrowerAnt):
+#     """ThrowerAnt that intimidates Bees, making them back away instead of advancing."""
+#
+#     name = 'Scary'
+#     food_cost = 6
+#     # BEGIN Problem EC 2
+#     implemented = +True   # Change to True to view in the GUI
+#     Scary_times = 2
+#     # END Problem EC 2
+#
+#     def throw_at(self, target):
+#         # BEGIN Problem EC 2
+#         #如果多次使用original_function， 一旦被第一个施加效果的蚂蚁
+#         # （在这里是 ScaryThrower）设置，就永远不会再被更新。
+#         # 就会导致反复覆写的出错，所以应当在Bee类中管理状态
+#         if target:
+#             if not hasattr(target, 'original_action'):
+#                 target.original_action = target.action
+#
+#             def new_back_away_action(gamestate):
+#                 if target.back_turns > 0:
+#                     if target.place.entrance.is_hive and not target.is_frozen:
+#                     #为了各个class都能获取，还是把is_frozen写到attribute里面
+#                         target.back_turns -= 1
+#                     elif not target.is_frozen:
+#                         #这里复用了action的代码，也可以创造一个倒着飞的蜜蜂子类
+#                         destination = target.place.entrance
+#                         if target.blocked():
+#                             target.sting(target.place.ant)
+#                         elif target.health > 0 and destination is not None:
+#                             target.move_to(destination)
+#                         target.back_turns -= 1
+#                 else:
+#                     target.original_action(gamestate)
+#
+#             if not target.is_scared:
+#                 target.back_turns = self.Scary_times
+#                 target.action = new_back_away_action
+#                 target.is_scared = True
+#
+#
+#         # END Problem EC 2
 
 class ScaryThrower(ThrowerAnt):
     """ThrowerAnt that intimidates Bees, making them back away instead of advancing."""
@@ -491,14 +592,16 @@ class ScaryThrower(ThrowerAnt):
     name = 'Scary'
     food_cost = 6
     # BEGIN Problem EC 2
-    implemented = False   # Change to True to view in the GUI
+    implemented = True
+    scary_duration = 2
     # END Problem EC 2
 
     def throw_at(self, target):
+        """Scare the TARGET Bee by calling its scare method."""
         # BEGIN Problem EC 2
-        "*** YOUR CODE HERE ***"
+        if target:
+            target.scare(self.scary_duration)
         # END Problem EC 2
-
 
 class NinjaAnt(Ant):
     """NinjaAnt does not block the path and damages all bees in its place."""
@@ -508,12 +611,15 @@ class NinjaAnt(Ant):
     food_cost = 5
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem EC 3
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
+    blocks_path = False
     # END Problem EC 3
 
     def action(self, gamestate):
         # BEGIN Problem EC 3
-        "*** YOUR CODE HERE ***"
+        original_bees = self.place.bees[:]
+        for bee in original_bees:
+            bee.reduce_health(self.damage)
         # END Problem EC 3
 
 
@@ -524,7 +630,8 @@ class LaserAnt(ThrowerAnt):
     food_cost = 10
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem EC 4
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
+    damage = 2
     # END Problem EC 4
 
     def __init__(self, health=1):
@@ -533,12 +640,32 @@ class LaserAnt(ThrowerAnt):
 
     def insects_in_front(self):
         # BEGIN Problem EC 4
-        return {}
+        tmp = self.place
+        insects = {}
+        dist = 0
+        while not tmp.is_hive:
+            for bee in tmp.bees:
+                insects[bee] = dist
+            if tmp.ant:
+                if tmp.ant.is_container :
+                    insects[tmp.ant] = dist
+                    if tmp.ant.ant_contained:
+                        if tmp.ant.ant_contained is not self:
+                            insects[tmp.ant.ant_contained] = dist
+                else:
+                    if tmp.ant is not self:
+                        insects[tmp.ant] = dist
+            tmp = tmp.entrance
+            dist += 1
+        return insects
+
+
         # END Problem EC 4
 
     def calculate_damage(self, distance):
         # BEGIN Problem EC 4
-        return 0
+        spec_damage = self.damage - distance * 0.25 - self.insects_shot * 0.0625
+        return 0 if 0 > spec_damage else spec_damage
         # END Problem EC 4
 
     def action(self, gamestate):
@@ -566,7 +693,9 @@ class Bee(Insect):
     name = 'Bee'
     damage = 1
     is_waterproof = True
-
+    was_ever_scared = False
+    slow_turns = 0
+    scared_turns = 0
 
     def sting(self, ant):
         """Attack an ANT, reducing its health by 1."""
@@ -584,22 +713,64 @@ class Bee(Insect):
         """Return True if this Bee cannot advance to the next Place."""
         # Special handling for NinjaAnt
         # BEGIN Problem EC 3
-        return self.place.ant is not None
+        if self.place.ant and self.place.ant.blocks_path:
+            return True
+        else:
+            return False
         # END Problem EC 3
 
-    def action(self, gamestate):
-        """A Bee's action stings the Ant that blocks its exit if it is blocked,
-        or moves to the exit of its current place otherwise.
-
-        gamestate -- The GameState, used to access game state information.
+    def scare(self, duration):
         """
-        destination = self.place.exit
+        Scare this Bee for a given DURATION.
+        A Bee can only be scared once in its lifetime.
+        """
+        # BEGIN Problem EC 2
+        if not self.was_ever_scared:
+            self.scared_turns = duration
+            self.was_ever_scared = True
+        # END Problem EC 2
 
+    def slow(self, duration):
+        """
+        Slow this Bee for a given DURATION.
+        """
+        # BEGIN Problem EC 1
+        self.slow_turns = duration
+        # END Problem EC 1
 
-        if self.blocked():
-            self.sting(self.place.ant)
-        elif self.health > 0 and destination is not None:
-            self.move_to(destination)
+    def action(self, gamestate):
+        """A Bee's action stings the Ant that blocks its exit if it is
+        blocked, or moves to the exit of its current place otherwise.
+
+        This action method has been modified to account for Slow and Scary effects.
+        """
+        # BEGIN EC MODIFICATIONS
+        # Priority 1: Check if slowed and unable to act this turn.
+        if self.slow_turns > 0 and gamestate.time % 2 != 0:
+            self.slow_turns -= 1
+            return  # Frozen for this turn, do nothing.
+
+        # Priority 2: Check if scared. If so, move backwards.
+        if self.scared_turns > 0:
+            destination = self.place.entrance
+            # Do not move back into the Hive.
+            if self.blocked():
+                self.sting(self.place.ant)
+            elif self.health > 0  and not destination.is_hive:
+                self.move_to(destination)
+            self.scared_turns -= 1
+        # Priority 3: Default action if not scared.
+        else:
+            destination = self.place.exit
+            if self.blocked():
+                self.sting(self.place.ant)
+            elif self.health > 0 and destination is not None:
+                self.move_to(destination)
+
+        # If the Bee was able to act this turn (wasn't frozen), decrement slow_turns.
+        if self.slow_turns > 0:
+            self.slow_turns -= 1
+        # END EC MODIFICATIONS
 
     def add_to(self, place):
         place.bees.append(self)
@@ -608,15 +779,6 @@ class Bee(Insect):
     def remove_from(self, place):
         place.bees.remove(self)
         super().remove_from(place)
-
-    def scare(self, length):
-        """
-        If this Bee has not been scared before, cause it to attempt to
-        go backwards LENGTH times.
-        """
-        # BEGIN Problem EC 2
-        "*** YOUR CODE HERE ***"
-        # END Problem EC 2
 
 
 class Wasp(Bee):
