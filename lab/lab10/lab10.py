@@ -1,0 +1,223 @@
+############## You do not need to understand any of this code!
+import base64
+ob = "CmRlZiBhZGRpdGlvbihleHByKToKICAgIGRpdmlkZW5kID0gZXhwci5maXJzdAogICAgZXhwciA9IGV4cHIucmVzdAogICAgd2hpbGUgZXhwciAhPSBuaWw6CiAgICAgICAgZGl2aXNvciA9IGV4cHIuZmlyc3QKICAgICAgICBkaXZpZGVuZCArPSBkaXZpc29yCiAgICAgICAgZXhwciA9IGV4cHIucmVzdAogICAgcmV0dXJuIGRpdmlkZW5kCgpkZWYgc3VidHJhY3Rpb24oZXhwcik6CiAgICBkaXZpZGVuZCA9IGV4cHIuZmlyc3QKICAgIGV4cHIgPSBleHByLnJlc3QKICAgIHdoaWxlIGV4cHIgIT0gbmlsOgogICAgICAgIGRpdmlzb3IgPSBleHByLmZpcnN0CiAgICAgICAgZGl2aWRlbmQgLT0gZGl2aXNvcgogICAgICAgIGV4cHIgPSBleHByLnJlc3QKICAgIHJldHVybiBkaXZpZGVuZAoKZGVmIG11bHRpcGxpY2F0aW9uKGV4cHIpOgogICAgZGl2aWRlbmQgPSBleHByLmZpcnN0CiAgICBleHByID0gZXhwci5yZXN0CiAgICB3aGlsZSBleHByICE9IG5pbDoKICAgICAgICBkaXZpc29yID0gZXhwci5maXJzdAogICAgICAgIGRpdmlkZW5kICo9IGRpdmlzb3IKICAgICAgICBleHByID0gZXhwci5yZXN0CiAgICByZXR1cm4gZGl2aWRlbmQKCmRlZiBkaXZpc2lvbihleHByKToKICAgIGRpdmlkZW5kID0gZXhwci5maXJzdAogICAgZXhwciA9IGV4cHIucmVzdAogICAgd2hpbGUgZXhwciAhPSBuaWw6CiAgICAgICAgZGl2aXNvciA9IGV4cHIuZmlyc3QKICAgICAgICBkaXZpZGVuZCAvPSBkaXZpc29yCiAgICAgICAgZXhwciA9IGV4cHIucmVzdAogICAgcmV0dXJuIGRpdmlkZW5kCg=="
+exec(base64.b64decode(ob.encode("ascii")).decode("ascii"))
+##############
+
+def calc_eval(exp):
+    """
+    >>> calc_eval(Pair("define", Pair("a", Pair(1, nil))))
+    'a'
+    >>> calc_eval("a")
+    1
+    >>> calc_eval(Pair("+", Pair(1, Pair(2, nil))))
+    3
+    """
+    if isinstance(exp, Pair):
+        operator = exp.first  # UPDATE THIS FOR Q2, e.g (+ 1 2), + is the operator
+        operands = exp.rest
+        if operator == 'and': # and expressions
+            return eval_and(operands)
+        elif operator == 'define': # define expressions
+            return eval_define(operands)
+        else: # Call expressions
+            return calc_apply(calc_eval(operator), operands.map(calc_eval) ) # 这样做后面才返回列表
+    elif exp in OPERATORS:   # Looking up procedures
+        return OPERATORS[exp]
+    elif isinstance(exp, int) or isinstance(exp, bool):   # Numbers and booleans
+        return exp
+    elif exp in bindings: # CHANGE THIS CONDITION FOR Q4 where are variables stored?
+        return bindings[exp] # UPDATE THIS FOR Q4, how do you access a variable?
+
+def calc_apply(op, args):
+    return op(args)
+
+def floor_div(args):
+    """
+    >>> floor_div(Pair(100, Pair(10, nil)))
+    10
+    >>> floor_div(Pair(5, Pair(3, nil)))
+    1
+    >>> floor_div(Pair(1, Pair(1, nil)))
+    1
+    >>> floor_div(Pair(5, Pair(2, nil)))
+    2
+    >>> floor_div(Pair(23, Pair(2, Pair(5, nil))))
+    2
+    >>> calc_eval(Pair("//", Pair(4, Pair(2, nil))))
+    2
+    >>> calc_eval(Pair("//", Pair(100, Pair(2, Pair(2, Pair(2, Pair(2, Pair(2, nil))))))))
+    3
+    >>> calc_eval(Pair("//", Pair(100, Pair(Pair("+", Pair(2, Pair(3, nil))), nil))))
+    20
+    """
+    def div_helper(args, initial):
+        if not args:
+            return initial
+        else:
+            initial = initial // args.first
+            return div_helper(args.rest, initial)
+    return div_helper(args.rest, args.first)
+
+
+scheme_t = True   # Scheme's #t
+scheme_f = False  # Scheme's #f
+
+def eval_and(expressions):
+    """
+    >>> calc_eval(Pair("and", Pair(1, nil)))
+    1
+    >>> calc_eval(Pair("and", Pair(False, Pair("1", nil))))
+    False
+    >>> calc_eval(Pair("and", Pair(1, Pair(Pair("//", Pair(5, Pair(2, nil))), nil))))
+    2
+    >>> calc_eval(Pair("and", Pair(Pair('+', Pair(1, Pair(1, nil))), Pair(3, nil))))
+    3
+    >>> calc_eval(Pair("and", Pair(Pair('-', Pair(1, Pair(0, nil))), Pair(Pair('/', Pair(5, Pair(2, nil))), nil))))
+    2.5
+    >>> calc_eval(Pair("and", Pair(0, Pair(1, nil))))
+    1
+    >>> calc_eval(Pair("and", nil))
+    True
+    """
+    # 规则 4: 如果没有表达式，结果为 True
+    if expressions is nil:
+        return True
+
+    current_value = expressions.first
+
+    # 规则 2: 如果当前值是 False，立即短路并返回 False
+    if current_value is scheme_f:  # 使用 'is False' 确保我们只对布尔值 False 短路
+        return False
+
+    # 对当前表达式求值
+    current_value = calc_eval(expressions.first)
+
+    # 规则 3: 关键：如果这是最后一个表达式，它的值就是整个 'and' 表达式的结果
+    if expressions.rest is nil:
+        return current_value
+
+    # 如果当前值为真，并且后面还有表达式，则继续对剩余的表达式求值
+    else:
+        return eval_and(expressions.rest)
+
+bindings = {}
+
+def eval_define(expressions):
+    """
+    >>> eval_define(Pair("a", Pair(1, nil)))
+    'a'
+    >>> eval_define(Pair("b", Pair(3, nil)))
+    'b'
+    >>> eval_define(Pair("c", Pair("a", nil)))
+    'c'
+    >>> calc_eval("c")
+    1
+    >>> calc_eval(Pair("define", Pair("d", Pair("//", nil))))
+    'd'
+    >>> calc_eval(Pair("d", Pair(4, Pair(2, nil))))
+    2
+    """
+    # 没有考虑到当后面是一个 and define or call-expression时，
+    # expressions.rest.first实际上就是Pair
+    # 比如一个(define x (+ 1 2))，转换成Pair形式就是：
+    # Pair("define", Pair("x", Pair(Pair("+", Pair(1, Pair(2, nil))), nil)))
+    # old version:
+    # if expressions.first in bindings:
+    #     return expressions.first
+    # else:
+    #     if type(expressions.rest.first) in (float, int):
+    #         bindings[expressions.first] = expressions.rest.first
+    #     elif expressions.rest.first in bindings:
+    #         bindings[expressions.first] = bindings[expressions.rest.first]
+    #     elif expressions.rest.first in OPERATORS:
+    #         bindings[expressions.first] = OPERATORS[expressions.rest.first]
+    #     else:
+    #         bindings[expressions.first] = calc_eval(expressions.rest)
+    #     return expressions.first
+
+    # 1. 获取符号 (symbol)
+    # expressions.first 就是 'x'
+    symbol = expressions.first
+
+    # 2. 获取并求值表达式 (expression)
+    # expressions.rest 是 Pair(Pair("+", Pair(1, Pair(2, nil))), nil)
+    # expressions.rest.first 就是 Pair("+", Pair(1, Pair(2, nil)))
+    # 这正是 (+ 1 2) 的 Pair 形式！
+    value = calc_eval(expressions.rest.first)
+
+    # 3. 绑定值
+    bindings[symbol] = value
+
+    # 4. 返回符号
+    return symbol
+
+OPERATORS = { "//": floor_div, "+": addition, "-": subtraction, "*": multiplication, "/": division }
+
+class Pair:
+    """A pair has two instance attributes: first and rest. rest must be a Pair or nil
+
+    >>> s = Pair(1, Pair(2, nil))
+    >>> s
+    Pair(1, Pair(2, nil))
+    >>> print(s)
+    (1 2)
+    >>> print(s.map(lambda x: x+4))
+    (5 6)
+    """
+    def __init__(self, first, rest):
+        self.first = first
+        self.rest = rest
+
+    def __repr__(self):
+        return 'Pair({0}, {1})'.format(repr(self.first), repr(self.rest))
+
+    def __str__(self):
+        s = '(' + str(self.first)
+        rest = self.rest
+        while isinstance(rest, Pair):
+            s += ' ' + str(rest.first)
+            rest = rest.rest
+        if rest is not nil:
+            s += ' . ' + str(rest)
+        return s + ')'
+
+    def __len__(self):
+        n, rest = 1, self.rest
+        while isinstance(rest, Pair):
+            n += 1
+            rest = rest.rest
+        if rest is not nil:
+            raise TypeError('length attempted on improper list')
+        return n
+
+    def __eq__(self, p):
+        if not isinstance(p, Pair):
+            return False
+        return self.first == p.first and self.rest == p.rest
+
+    def map(self, fn):
+        """Return a Scheme list after mapping Python function FN to SELF."""
+        mapped = fn(self.first)
+        if self.rest is nil or isinstance(self.rest, Pair):
+            return Pair(mapped, self.rest.map(fn))
+        else:
+            raise TypeError('ill-formed list')
+
+class nil:
+    """The empty list"""
+
+    def __repr__(self):
+        return 'nil'
+
+    def __str__(self):
+        return '()'
+
+    def __len__(self):
+        return 0
+
+    def map(self, fn):
+        return self
+
+nil = nil() # Assignment hides the nil class; there is only one instance
+
