@@ -60,31 +60,38 @@
                (params (cadr expr))
                (body   (cddr expr)))
            ; BEGIN OPTIONAL PROBLEM 2
-           `(,form ,params . , (map let-to-lambda body))
+           (cons form (cons params   (map let-to-lambda body)))
            ; END OPTIONAL PROBLEM 2
            ))
         ((let? expr)
-          (let* ((bindings (cadr expr))
-          ; let* : sequential binding
-                  (body     (cddr expr))
-                  (zipped   (zip bindings))
-                  (vars     (car zipped))
-                  (vals     (cadr zipped)))
-          `((lambda ,vars . ,(map let-to-lambda body)) . ,(map let-to-lambda vals))))
+          (let ((values (cadr expr))
+               (body   (cddr expr)))
+           ; BEGIN OPTIONAL PROBLEM 2
+           (cons (cons 'lambda (cons (car (zip values)) (map let-to-lambda body)))
+            (map let-to-lambda (cadr (zip values)))))
+           ; END OPTIONAL PROBLEM 2
+          )
+
         (else
          ; BEGIN OPTIONAL PROBLEM 2
-         `(,(car expr) . ,(map let-to-lambda (cdr expr)))
+         (cons (let-to-lambda (car expr)) (map let-to-lambda (cdr expr)))
          ; END OPTIONAL PROBLEM 2
          )))
 
 ; Some utility functions that you may find useful to implement for let-to-lambda
 
 (define (zip pairs)
+  (define (reverse s)
+	(define (reverse-iter s r)
+		(if (null? s)
+			r
+			(reverse-iter (cdr s) (cons (car s) r))))
+	(reverse-iter s nil))
   (define (zip-help pairs start1 start2)
     (if (null? pairs)
         (list (reverse start1) (reverse start2))
         (zip-help (cdr pairs)
                   (cons (caar pairs) start1)
-                  (cons (cdar pairs) start2))))
+                  (cons (cadr (car pairs)) start2))))
 
   (zip-help pairs nil nil))
