@@ -98,7 +98,7 @@ def eval_all(expressions, env):
     if expressions is nil:
         return None
     elif expressions.rest is nil:
-        return scheme_eval(expressions.first, env)
+        return scheme_eval(expressions.first, env, True)
     else:
         scheme_eval(expressions.first, env)
         #如果这里没有return，做不到最终调用值的层层返回
@@ -138,7 +138,11 @@ def optimize_tail_calls(unoptimized_scheme_eval):
 
         result = Unevaluated(expr, env)
         # BEGIN OPTIONAL PROBLEM 1
-        "*** YOUR CODE HERE ***"
+        while isinstance(result, Unevaluated):
+            expr = result.expr
+            env = result.env
+            result = unoptimized_scheme_eval(expr, env)
+        return result
         # END OPTIONAL PROBLEM 1
     return optimized_eval
 
@@ -159,4 +163,4 @@ def optimize_tail_calls(unoptimized_scheme_eval):
 # Uncomment the following line to apply tail call optimization #
 ################################################################
 
-# scheme_eval = optimize_tail_calls(scheme_eval)
+scheme_eval = optimize_tail_calls(scheme_eval)

@@ -46,12 +46,12 @@
 (define (let-to-lambda expr)
   (cond ((atom? expr)
          ; BEGIN OPTIONAL PROBLEM 2
-         'replace-this-line
+         expr
          ; END OPTIONAL PROBLEM 2
          )
         ((quoted? expr)
          ; BEGIN OPTIONAL PROBLEM 2
-         'replace-this-line
+         expr
          ; END OPTIONAL PROBLEM 2
          )
         ((or (lambda? expr)
@@ -60,23 +60,31 @@
                (params (cadr expr))
                (body   (cddr expr)))
            ; BEGIN OPTIONAL PROBLEM 2
-           'replace-this-line
+           `(,form ,params . , (map let-to-lambda body))
            ; END OPTIONAL PROBLEM 2
            ))
         ((let? expr)
-         (let ((values (cadr expr))
-               (body   (cddr expr)))
-           ; BEGIN OPTIONAL PROBLEM 2
-           'replace-this-line
-           ; END OPTIONAL PROBLEM 2
-           ))
+          (let* ((bindings (cadr expr))
+          ; let* : sequential binding
+                  (body     (cddr expr))
+                  (zipped   (zip bindings))
+                  (vars     (car zipped))
+                  (vals     (cadr zipped)))
+          `((lambda ,vars . ,(map let-to-lambda body)) . ,(map let-to-lambda vals))))
         (else
          ; BEGIN OPTIONAL PROBLEM 2
-         'replace-this-line
+         `(,(car expr) . ,(map let-to-lambda (cdr expr)))
          ; END OPTIONAL PROBLEM 2
          )))
 
 ; Some utility functions that you may find useful to implement for let-to-lambda
 
 (define (zip pairs)
-  'replace-this-line)
+  (define (zip-help pairs start1 start2)
+    (if (null? pairs)
+        (list (reverse start1) (reverse start2))
+        (zip-help (cdr pairs)
+                  (cons (caar pairs) start1)
+                  (cons (cdar pairs) start2))))
+
+  (zip-help pairs nil nil))
